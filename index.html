@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Identificador BBVA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: una columna sobria — carga arriba, libro de movimientos abajo. Marca Fudo 2026 */
+:root{
+  --bg:#FFFBEB; --surface:#ffffff; --ink:#232323; --muted:#6b6660; --line:#ece6d6; --soft:#f7f2e2;
+  --accent:#FF5023; --accent-ink:#ffffff; --accent-soft:#fff0e6; --blue:#3937FF;
+  --ok:#2a8c74; --ok-bg:#E0F6F0; --ver:#d23a1a; --ver-bg:#ffe7de;
+  --f-ui:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#232323; --surface:#2c2b29; --ink:#f4f1e8; --muted:#aaa49a; --line:#3d3b37; --soft:#262523;
+  --accent:#FF6A42; --accent-ink:#1b0d07; --accent-soft:#3a2219; --blue:#8f8eff;
+  --ok:#5fcaae; --ok-bg:#1e3a33; --ver:#ff8a66; --ver-bg:#3d241b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#232323; --surface:#2c2b29; --ink:#f4f1e8; --muted:#aaa49a; --line:#3d3b37; --soft:#262523;
+  --accent:#FF6A42; --accent-ink:#1b0d07; --accent-soft:#3a2219; --blue:#8f8eff;
+  --ok:#5fcaae; --ok-bg:#1e3a33; --ver:#ff8a66; --ver-bg:#3d241b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.01em;margin:0}
+h1 span{color:var(--accent)}
+.brand{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.sub{color:var(--muted);margin:2px 0 0}
+.load{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.slot{flex:1 1 220px;min-width:0;background:var(--surface);border:1.5px dashed var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;position:relative;display:grid;gap:2px;transition:border-color .15s,background .15s}
+.slot:hover,.slot.drag{border-color:var(--accent)}
+.slot.loaded{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
+.slot.small{flex:0 1 200px}
+.slot input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.slot .t{font-weight:600}
+.slot .st{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.slot.loaded .st{color:var(--ink)}
+button.primary{font:inherit;font-weight:600;background:var(--accent);color:var(--accent-ink);border:0;border-radius:9px;padding:0 22px;min-height:44px;cursor:pointer}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.ghost{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 14px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hist{font-size:12.5px;color:var(--muted)}
+.hist label{color:var(--accent);text-decoration:underline;cursor:pointer;position:relative}
+.hist input{position:absolute;width:1px;height:1px;opacity:0}
+.err{color:var(--ver);font-size:13px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:3px}
+.seg button{font:inherit;border:0;background:none;color:var(--muted);padding:5px 14px;border-radius:7px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.seg button b{font-family:var(--f-num);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.check{font-size:12px;color:var(--muted);font-family:var(--f-num)}
+.check.bad{color:var(--ver)}
+.actions{display:flex;gap:8px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}
+th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.v td{background:color-mix(in srgb,var(--ver-bg) 45%,transparent)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.amt{text-align:right}
+.neg{color:var(--ink)} .pos{color:var(--ok)}
+.conc{font-family:var(--f-num);font-size:11.5px;color:var(--muted);max-width:230px;overflow-wrap:anywhere}
+td input.ed{font:inherit;width:100%;min-width:180px;border:1px solid transparent;border-radius:6px;padding:4px 6px;background:transparent;color:var(--ink)}
+td input.ed:hover{border-color:var(--line)}
+td input.ed:focus{border-color:var(--accent);background:var(--bg)}
+td input.ed::placeholder{color:var(--ver)}
+.why{font-size:11.5px;color:var(--ver);padding:2px 6px 0}
+.pill{font:inherit;font-size:12px;font-weight:600;border:0;border-radius:999px;padding:3px 11px;cursor:pointer;white-space:nowrap}
+.pill.OK{background:var(--ok-bg);color:var(--ok)}
+.pill.VER{background:var(--ver-bg);color:var(--ver)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;z-index:20}
+.intro{color:var(--muted);font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:4px}
+.intro b{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">fudo · Administración</div>
+    <h1>Identificador <span>BBVA</span></h1>
+    <p class="sub">Comandarina S.R.L. · Subí el extracto y los pagos de Odoo. Te devuelvo el Excel para importar.</p>
+  </header>
+
+  <section aria-label="Archivos">
+    <div class="load">
+      <div class="slot" id="s-bank"><input type="file" id="f-bank" accept=".xlsx,.xls,.csv"><div class="t">Extracto BBVA</div><div class="st msg">Arrastrá o elegí el Excel del banco</div></div>
+      <div class="slot" id="s-pay"><input type="file" id="f-pay" accept=".xlsx,.xls,.csv"><div class="t">Pagos Odoo</div><div class="st msg">Export de Pagos (account.payment)</div></div>
+      <div class="slot small" id="s-inv"><input type="file" id="f-inv" accept=".xlsx,.xls,.csv"><div class="t">Facturas <span class="st">· opcional</span></div><div class="st msg">Para completar la descripción</div></div>
+      <button class="primary" id="run" disabled>Identificar</button>
+    </div>
+    <p class="hist" id="hist"><span id="hist-msg">Sin datos cargados.</span> <label for="f-datos">Cargar archivo de datos (.json)<input type="file" id="f-datos" accept=".json"></label> · <label for="f-hist">Sumar historial de Odoo<input type="file" id="f-hist" accept=".xlsx,.xls,.csv"></label></p>
+    <p class="err" id="err" role="alert"></p>
+  </section>
+
+  <section class="intro" id="intro">
+    <span><b>OK</b>: regla fija, pago o cobro cargado en Odoo por el mismo importe, o factura exacta.</span>
+    <span><b>Revisar</b>: no hay dato seguro. Si hay algo precargado, es lo que se usó la última vez para ese concepto.</span>
+  </section>
+
+  <section id="result" hidden>
+    <div class="bar">
+      <div class="seg" id="seg" role="group" aria-label="Filtro"></div>
+      <span class="check" id="check"></span>
+      <div class="actions"><button class="ghost" id="copy">Copiar</button><button class="primary" id="dl" style="min-height:36px">Descargar Excel</button></div>
+    </div>
+    <div class="tablewrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>Fecha</th><th>Concepto banco</th><th style="text-align:right">Importe</th><th>Descripción</th><th>Contacto</th><th>Estado</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ===== Motor de identificación BBVA (Comandarina SRL) ===== */
+const Engine = (() => {
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DAY = 86400000;
+  const MP_COE = 'TRANSFERENCIA INMEDIATA COE 30717739236';
+  const PRESTAMO_REF = /^DEBITO CUOTA\s+[\d-]+/;
+  // Descripción fija por proveedor (le gana a la referencia de la factura)
+  let CFG = { fijas: {}, hardware: [], cuit: [], cuentas: [] };
+  const setConfig = c => { CFG = { fijas: {}, hardware: [], cuit: [], cuentas: [], ...(c || {}) }; };
+  const fija = c => CFG.fijas[String(c || '').toUpperCase().replace(/\s+/g, ' ').trim()];
+  const UNPAID = ['Registrado','En proceso de pago','Pagado parcialmente'];
+  const EXCL_PAGO = ['Revertido','Cancelado','Borrador'];
+
+  /* ---------- helpers ---------- */
+  const strip = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const low = s => strip(s).toLowerCase().replace(/\s+/g, ' ').trim();
+  const up = s => String(s ?? '').toUpperCase().replace(/\s+/g, ' ').trim();
+  const clean = s => String(s ?? '').replace(/\t/g, ' ').replace(/\s+/g, ' ').trim();
+  const r2 = n => Math.round(n * 100) / 100;
+  const eq = (a, b) => Math.abs(a - b) < 0.015;
+  const pad = n => String(n).padStart(2, '0');
+  const fmt = n => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtD = d => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+  const pattern = s => up(s).replace(/\d{2}\/\d{2}\/\d{2}/g, '').replace(/\d+/g, '#').replace(/\s+/g, ' ').trim();
+
+  const acctKey = s => { const m = up(s).match(/\b(C[AC]P\d{3} \d{6} \d)\b/); return m ? m[1] : null; };
+  function toDate(v) {
+    if (v == null || v === '') return null;
+    if (v instanceof Date) { const t = new Date(v.getTime() + 12 * 3600e3); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+    if (typeof v === 'number') { const t = new Date(Math.round((v - 25569) * DAY) + 12 * 3600e3); return new Date(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()); }
+    const s = String(v).trim();
+    let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+    if (m) { let y = +m[3]; if (y < 100) y += 2000; return new Date(y, +m[2] - 1, +m[1]); }
+    m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    return null;
+  }
+  function toNum(v) {
+    if (v == null || v === '') return null;
+    if (typeof v === 'number') return v;
+    let s = String(v).replace(/[^\d,.\-()]/g, '');
+    if (!s) return null;
+    const neg = /^\(.*\)$/.test(s) || s.includes('-');
+    s = s.replace(/[()\-]/g, '');
+    const lc = s.lastIndexOf(','), ld = s.lastIndexOf('.');
+    if (lc > ld) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '');
+    const n = parseFloat(s);
+    return isNaN(n) ? null : (neg ? -n : n);
+  }
+
+  /* Busca la fila de encabezados y devuelve {rows, col(aliases)} */
+  function table(rows2d, required) {
+    for (let i = 0; i < Math.min(rows2d.length, 30); i++) {
+      const h = (rows2d[i] || []).map(low);
+      if (required.every(alts => alts.some(a => h.some(c => c === a || c.startsWith(a))))) {
+        const col = (...alts) => {
+          for (const a of alts) { const j = h.findIndex(c => c === a); if (j >= 0) return j; }
+          for (const a of alts) { const j = h.findIndex(c => c.startsWith(a)); if (j >= 0) return j; }
+          return -1;
+        };
+        return { rows: rows2d.slice(i + 1).filter(r => r && r.some(c => c !== null && c !== '')), col };
+      }
+    }
+    return null;
+  }
+
+  /* ---------- parsers ---------- */
+  function parseBank(rows2d) {
+    const t = table(rows2d, [['fecha'], ['concepto', 'descripcion', 'detalle']]);
+    if (!t) throw new Error('No encontré las columnas Fecha y Concepto en el extracto.');
+    const cF = t.col('fecha'), cC = t.col('concepto', 'descripcion', 'detalle'), cI = t.col('importe', 'monto'),
+      cCr = t.col('credito', 'creditos', 'haber'), cDb = t.col('debito', 'debitos', 'debe'), cCod = t.col('codigo', 'cod');
+    if (cI < 0 && cCr < 0 && cDb < 0) throw new Error('No encontré columnas de importe (Importe o Crédito/Débito) en el extracto.');
+    const out = [];
+    t.rows.forEach((r, i) => {
+      const fecha = toDate(r[cF]); const concepto = clean(r[cC]);
+      if (!fecha || !concepto) return;
+      let imp;
+      if (cI >= 0 && toNum(r[cI]) != null) imp = toNum(r[cI]);
+      else { const cr = toNum(r[cCr]) || 0, db = toNum(r[cDb]) || 0; imp = Math.abs(cr) - Math.abs(db); }
+      if (!imp) return;
+      out.push({ idx: out.length, fecha, concepto, importe: r2(imp), codigo: cCod >= 0 ? r[cCod] : null });
+    });
+    return out;
+  }
+  function parseHist(rows2d) {
+    const t = table(rows2d, [['fecha'], ['etiqueta'], ['referencia'], ['importe']]);
+    if (!t) throw new Error('El historial tiene que traer Fecha, Etiqueta, Contacto, Referencia e Importe (export de líneas de estado de cuenta de Odoo).');
+    const cF = t.col('fecha'), cE = t.col('etiqueta'), cC = t.col('contacto'), cR = t.col('referencia'), cI = t.col('importe');
+    return t.rows.map(r => ({ fecha: toDate(r[cF]), etiqueta: clean(r[cE]), contacto: clean(r[cC]), ref: clean(r[cR]), importe: toNum(r[cI]) || 0 }))
+      .filter(h => h.fecha && (h.etiqueta || h.ref));
+  }
+  function parseInv(rows2d) {
+    const t = table(rows2d, [['numero'], ['total']]);
+    if (!t) throw new Error('El export de facturas tiene que traer Número, Contacto, Fecha, Moneda, Total, Estado en pago y Referencia.');
+    const c = {
+      num: t.col('numero'), cuit: t.col('contacto/numero de identificacion', 'cuit'), nom: t.col('nombre del contacto', 'contacto', 'proveedor', 'empresa'),
+      fec: t.col('fecha de la factura', 'fecha'), mon: t.col('moneda/nombre', 'moneda'), tot: t.col('total'), adeu: t.col('importe adeudado', 'adeudado', 'importe residual'),
+      est: t.col('estado'), estp: t.col('estado en pago'), ref: t.col('referencia'), tipo: t.col('tipo de documento')
+    };
+    return t.rows.map((r, i) => {
+      const mon = c.mon >= 0 ? clean(r[c.mon]) : 'Argentine peso';
+      return {
+        id: i, numero: clean(r[c.num]), cuit: String(r[c.cuit] ?? '').replace(/\D/g, ''), nombre: clean(r[c.nom]),
+        fecha: toDate(r[c.fec]), usd: /dollar|usd|dólar|dolar/i.test(mon), total: Math.abs(toNum(r[c.tot]) || 0),
+        adeudado: c.adeu >= 0 ? Math.abs(toNum(r[c.adeu]) || 0) : null,
+        estado: clean(r[c.est]), estadoPago: clean(r[c.estp]), ref: clean(r[c.ref]), tipo: clean(r[c.tipo])
+      };
+    }).filter(f => f.numero && f.fecha && f.total && !EXCL_PAGO.includes(f.estadoPago) && !['Cancelado', 'Borrador'].includes(f.estado) && !/^\(\d+\)\s*NOTAS? DE CR/i.test(f.tipo));
+  }
+  function parsePay(rows2d) {
+    const t = table(rows2d, [['fecha'], ['cliente/proveedor', 'proveedor', 'contacto', 'empresa']]);
+    if (!t) throw new Error('El export de pagos tiene que traer Fecha, Cliente/Proveedor e Importe.');
+    const cF = t.col('fecha'), cN = t.col('numero'), cP = t.col('cliente/proveedor', 'proveedor', 'contacto', 'empresa'),
+      cS = t.col('importe firmado en la moneda de la empresa', 'importe firmado'), cT = t.col('total pago', 'importe'), cE = t.col('estado');
+    const cI = cS >= 0 ? cS : cT, signed = cS >= 0;
+    return t.rows.map(r => ({ fecha: toDate(r[cF]), numero: clean(r[cN]), contacto: clean(r[cP]), importe: signed ? (toNum(r[cI]) || 0) : Math.abs(toNum(r[cI]) || 0), signed, bruto: cT >= 0 ? Math.abs(toNum(r[cT]) || 0) : null, estado: clean(r[cE]) }))
+      .filter(p => p.fecha && p.importe && !/cancel/i.test(p.estado));
+  }
+
+  /* ---------- conocimiento del historial ---------- */
+  function learn(hist) {
+    const byRef = new Map(), byPat = new Map(), byContact = new Map(), byAcct = new Map();
+    const sorted = [...hist].sort((a, b) => a.fecha - b.fecha);
+    for (const h of sorted) {
+      const k = up(h.ref);
+      if (!byRef.has(k)) byRef.set(k, []); byRef.get(k).push(h);
+      const p = pattern(h.ref);
+      if (!byPat.has(p)) byPat.set(p, []); byPat.get(p).push(h);
+      const ak = acctKey(h.ref); if (ak) { if (!byAcct.has(ak)) byAcct.set(ak, []); byAcct.get(ak).push(h); }
+      if (h.contacto) { if (!byContact.has(h.contacto)) byContact.set(h.contacto, []); byContact.get(h.contacto).push(h); }
+    }
+    // Prototipos AFIP
+    const afipTypes = [
+      { k: 'SICOSS', re: /SICOSS|SIJPDJ/i },
+      { k: 'SICORE', re: /^SICORE/i },
+      { k: 'ANTICIPO', re: /anticipo de ganancias/i },
+      { k: 'IIBB', re: /IIBB|CM-SOP/i },
+      { k: 'IVA', re: /^IVA DJ/i },
+      { k: 'RETIIGG', re: /rete.?ci[oó]n de iigg/i },
+    ];
+    const afipHist = sorted.filter(h => h.importe < 0 && /PAGOS AFIP|^ARCA|CM-SOP|VCON|SICORE|VEP/i.test(h.ref));
+    const protos = afipTypes.map(t => {
+      const xs = afipHist.filter(h => t.re.test(h.etiqueta)).slice(-8);
+      if (!xs.length) return null;
+      const med = a => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+      return { ...t, day: med(xs.map(x => x.fecha.getDate())), amt: med(xs.map(x => -x.importe)), last: xs[xs.length - 1], n: xs.length };
+    }).filter(Boolean);
+    // Préstamos comex: número -> lote
+    const comexNums = []; const anchors = [];
+    for (const h of sorted) {
+      const m = up(h.ref).match(/OPERACION COMERCIO EXTERIOR (\d{6,}-\d+)/);
+      if (!m) continue;
+      if (h.importe > 0 && !comexNums.includes(m[1])) comexNums.push(m[1]);
+      const l = h.etiqueta.match(/lote\s*(\d+)/i); if (l) anchors.push([m[1], +l[1]]);
+    }
+    return { byRef, byPat, byContact, byAcct, afipHist, protos, comexNums, anchors, sorted };
+  }
+
+  /* ---------- proceso ---------- */
+  function process(bank, hist, inv, pay, opts = {}) {
+    const tc = opts.tc || 1500, tcTol = (opts.tcTol ?? 6) / 100, retMin = (opts.retMin ?? 85) / 100;
+    const K = learn(hist || []);
+    inv = inv || []; pay = pay || [];
+    const usedInv = new Set(), usedPay = new Set();
+    const out = [];
+    const done = new Set();
+    const res = (b, o) => { out.push({ fecha: b.fecha, importe: b.importe, concepto: b.concepto, idxs: [b.idx], desc: '', contacto: '', ref: b.concepto, control: 'VER', motivo: '', factura: '', ...o }); done.add(b.idx); };
+    const mesAnt = d => { const x = new Date(d.getFullYear(), d.getMonth() - 1, 1); return { mm: pad(x.getMonth() + 1), yy: String(x.getFullYear()).slice(2), yyyy: x.getFullYear() }; };
+
+    // 1) Agrupación COM+IVA por día
+    const COM = /^(IVA TASA GENERAL|PERCEPCION IVA RG ?2408|GESTION DE SUELDOS|COMI(SION)?\.? ?(POR )?TRANSFERENCIA|COMISION PAGO A PROVEEDORES|COMISION MANTENIMIENTO|COM\.? ?MANTENIMIENTO|COMISION POR SERVICIO DE CUENTA|PERC\.? ?CABA ING\.? ?BRUTOS|COM MANT MENS|COMISION POR MOVIMIENTOS)/;
+    const comByDay = new Map();
+    for (const b of bank) if (b.importe < 0 && COM.test(up(b.concepto))) {
+      const k = b.fecha.getTime(); if (!comByDay.has(k)) comByDay.set(k, []); comByDay.get(k).push(b);
+    }
+    for (const [, items] of comByDay) {
+      const d = items[0].fecha, lab = `COM+IVA ${MESES[d.getMonth()]} ${d.getFullYear()}`;
+      const tot = r2(items.reduce((s, x) => s + x.importe, 0));
+      out.push({ fecha: d, importe: tot, concepto: items.map(x => x.concepto).join(' + '), idxs: items.map(x => x.idx), desc: lab, contacto: '', ref: lab, control: 'OK', motivo: `Agrupa ${items.length} gastos/IVA bancarios del día`, factura: '' });
+      items.forEach(x => done.add(x.idx));
+    }
+
+    // 2) Comex: lote por número de operación
+    const comexNums = [...K.comexNums];
+    for (const b of bank) { const m = up(b.concepto).match(/OPERACION COMERCIO EXTERIOR (\d{6,}-\d+)/); if (m && b.importe > 0 && !comexNums.includes(m[1])) comexNums.push(m[1]); }
+    let offset = null;
+    if (K.anchors.length) { const offs = K.anchors.map(([n, l]) => l - comexNums.indexOf(n)).filter((x, i) => comexNums.indexOf(K.anchors[i][0]) >= 0); if (offs.length) { const c = {}; offs.forEach(o => c[o] = (c[o] || 0) + 1); offset = +Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]; } }
+    const loteOf = n => { const i = comexNums.indexOf(n); return i >= 0 && offset != null ? i + offset : null; };
+    const comexDayLote = new Map();
+    for (const b of bank) { const m = up(b.concepto).match(/OPERACION COMERCIO EXTERIOR (\d{6,}-\d+)/); if (m) comexDayLote.set(b.fecha.getTime(), loteOf(m[1])); }
+
+    // 2b) Autónomos: dos pagos de servicios iguales el mismo día
+    const serv = new Map();
+    for (const b of bank) if (!done.has(b.idx) && b.importe < 0 && /^PAGO DE SERVICIOS/.test(up(b.concepto))) { const k = +b.fecha + '|' + b.importe; if (!serv.has(k)) serv.set(k, []); serv.get(k).push(b); }
+    for (const [, g] of serv) if (g.length === 2) { res(g[0], { desc: 'Autónomos AFF', control: 'OK', motivo: 'Dos pagos de servicios iguales el mismo día = Autónomos AFF y JMC' }); res(g[1], { desc: 'Autónomos JMC', control: 'OK', motivo: 'Dos pagos de servicios iguales el mismo día = Autónomos AFF y JMC' }); }
+
+    // 3) Reglas fijas y semi-fijas línea a línea
+    const afipLines = [];
+    for (const b of bank) {
+      if (done.has(b.idx)) continue;
+      const C = up(b.concepto);
+      if (/^IMP\.? ?LEY 25\.?413/.test(C)) { res(b, { desc: 'IMP.LEY 25413', ref: 'IMP.LEY 25413', control: 'OK', motivo: 'Regla fija' }); continue; }
+      if (/^LEY NRO 25\.?413/.test(C)) { res(b, { desc: 'IMP.LEY 25413', control: 'OK', motivo: 'Regla fija' }); continue; }
+      if (/SIRCREB/.test(C)) { res(b, { desc: 'SIRCREB', control: 'OK', motivo: 'Regla fija' }); continue; }
+      if (/^OPER\.? ?(FONDO|FDO)/.test(C)) { res(b, { desc: b.importe < 0 ? 'FCI' : 'Rescate FCI', control: 'OK', motivo: b.importe < 0 ? 'Débito FCI = suscripción' : 'Crédito FCI = rescate' }); continue; }
+      if (/^(OP\.)?TITULOS/.test(C)) { res(b, { desc: 'Bonos', control: 'OK', motivo: 'Regla fija' }); continue; }
+      if (C === MP_COE && b.importe > 0) { res(b, { desc: 'Transf. MP a BBVA', control: 'OK', motivo: 'Regla fija (CUIT de MP)' }); continue; }
+      { const rc = CFG.cuit.find(r => C === 'TRANSFERENCIA ' + r.cuit && Math.sign(b.importe) === (r.signo || -1));
+        if (rc) { res(b, { desc: rc.desc, contacto: rc.contacto || '', control: 'OK', motivo: `Regla fija (CUIT ${rc.cuit})` }); continue; }
+        const ra = CFG.cuentas.find(r => acctKey(C) === r.cuenta);
+        if (ra) { res(b, { desc: b.importe > 0 ? ra.credito : ra.debito, contacto: ra.contacto || '', control: 'OK', motivo: `Regla fija (cuenta ${ra.cuenta})` }); continue; } }
+      if (/SUELDOS|HABERES/.test(C) && b.importe <= -50000000) { const d = b.fecha.getDate() >= 20 ? b.fecha : new Date(b.fecha.getFullYear(), b.fecha.getMonth() - 1, 1); res(b, { desc: `sueldo${d.getFullYear()}${pad(d.getMonth() + 1)} HABERES`, control: 'VER', motivo: 'Confirmar con la liquidación de sueldos' }); continue; }
+      if (/^CUENTA VISA NRO/.test(C) && b.importe < 0) { res(b, { desc: 'Pago TC', contacto: 'COMANDARINA S. R. L.', control: 'OK', motivo: 'Regla fija (pago de la tarjeta)' }); continue; }
+      if (PRESTAMO_REF.test(C)) {
+        const prev = (K.byRef.get(C) || []).filter(h => /cuota\s*\d+\s*\/\s*\d+/i.test(h.etiqueta)).pop();
+        if (prev) {
+          const [, n, t] = prev.etiqueta.match(/cuota\s*(\d+)\s*\/\s*(\d+)/i);
+          const sameMonth = prev.fecha.getMonth() === b.fecha.getMonth() && prev.fecha.getFullYear() === b.fecha.getFullYear();
+          const nn = sameMonth ? +n : +n + 1;
+          res(b, { desc: `Pago prestamos - Cuota ${nn}/${t}`, contacto: prev.contacto || 'BANCO BBVA ARGENTINA S.A.', control: sameMonth ? 'SUGERIDO' : 'OK', motivo: `Última cuota en historial: ${prev.etiqueta} (${fmtD(prev.fecha)})` });
+        } else res(b, { desc: 'Pago prestamos - Cuota ?/?', contacto: 'BANCO BBVA ARGENTINA S.A.', control: 'VER', motivo: 'Préstamo sin cuotas previas en el historial' });
+        continue;
+      }
+      if (/^OPERACION COMERCIO EXTERIOR/.test(C)) {
+        const m = C.match(/OPERACION COMERCIO EXTERIOR (\d{6,}-\d+)/);
+        const lote = m ? loteOf(m[1]) : comexDayLote.get(b.fecha.getTime());
+        const L = lote ? ` - Lote ${lote}` : '';
+        const intDay = bank.some(x => x.fecha.getTime() === b.fecha.getTime() && /INTERESES/.test(up(x.concepto)));
+        let desc;
+        if (m) desc = b.importe > 0 ? `Prestamo para importación de Lectores${L}` : `Cancelación de prestamo${L}`;
+        else if (/INTERESES/.test(C)) desc = `Intereses del prestamo${L}`;
+        else if (/PERC/.test(C)) desc = intDay ? `Intereses del prestamo- Percep IVA${L}` : `Gastos de Importación - Percep IVA${L}`;
+        else if (/IVA\.INT/.test(C)) desc = `Intereses del prestamo- IVA${L}`;
+        else if (/IVA/.test(C)) desc = `Gastos de Importación - Iva${L}`;
+        else if (/GASTOS/.test(C)) desc = `Gastos de Importación${L}`;
+        else desc = `Comercio exterior${L}`;
+        res(b, { desc, contacto: m ? '' : 'BANCO BBVA ARGENTINA S.A.', control: lote ? 'OK' : 'VER', motivo: lote ? `Operación ${m ? m[1] : 'del mismo día'} = Lote ${lote} según historial` : 'No pude deducir el lote' });
+        continue;
+      }
+      if (/^PAGOS? AFIP/.test(C) && b.importe < 0) { afipLines.push(b); continue; }
+    }
+
+    // 4) AFIP: clasificación por día del mes y monto
+    if (afipLines.length && K.protos.length) {
+      const cands = [];
+      for (const b of afipLines) for (const p of K.protos) {
+        const a = -b.importe;
+        const paid = K.afipHist.some(h => p.re.test(h.etiqueta) && h.fecha.getMonth() === b.fecha.getMonth() && h.fecha.getFullYear() === b.fecha.getFullYear() && h.fecha < b.fecha);
+        const s = Math.abs(Math.log(a / p.amt)) + 0.06 * Math.abs(b.fecha.getDate() - p.day) + (paid ? 2 : 0);
+        cands.push({ b, p, s });
+      }
+      cands.sort((x, y) => x.s - y.s);
+      const usedB = new Set(), usedT = new Set();
+      for (const c of cands) {
+        if (usedB.has(c.b.idx)) continue;
+        const key = c.b.fecha.getFullYear() + '-' + c.b.fecha.getMonth() + '-' + c.p.k;
+        if (usedT.has(key) && cands.some(o => o.b === c.b && !usedT.has(o.b.fecha.getFullYear() + '-' + o.b.fecha.getMonth() + '-' + o.p.k) && o.s < c.s + 1.5)) continue;
+        usedB.add(c.b.idx); usedT.add(key);
+        const { mm, yy, yyyy } = mesAnt(c.b.fecha);
+        const map = {
+          SICOSS: [`SIJPDJ${mm}/${yy} SICOSS ${yyyy}_${mm}`, 'PAGOS AFIP'],
+          SICORE: [`SICORE${mm}/${yy}`, 'PAGOS AFIP'],
+          ANTICIPO: ['Anticipo de ganancias', `ARCA${c.b.fecha.getFullYear()}`],
+          IIBB: [`IIBB ${yyyy}_${mm}`, `CM-SOP${mm}/${yy}`],
+          IVA: [`IVA DJ${mm}/${yy}`, `ARCA${mm}/${yy}`],
+          RETIIGG: ['Reteción de IIGG', 'PAGOS AFIP'],
+        };
+        const [desc, ref] = map[c.p.k];
+        const conf = c.s < 0.5 ? 'SUGERIDO' : 'VER';
+        res(c.b, { desc, ref, control: conf, motivo: `Buscar en pagos ARCA · propuesto por día y monto (parecido a ${c.p.last.etiqueta})` });
+      }
+    }
+    for (const b of afipLines) if (!done.has(b.idx)) res(b, { motivo: 'Buscar en pagos ARCA' });
+
+    // 5) Sueldos
+    for (const b of bank) {
+      if (done.has(b.idx)) continue;
+      const C = up(b.concepto);
+      if (!/SUELDOS|HABERES/.test(C)) continue;
+      const h = (K.byRef.get(C) || []).filter(x => Math.abs(x.fecha.getDate() - b.fecha.getDate()) <= 3);
+      const cnt = {}; h.forEach(x => { const k = /liquid/i.test(x.etiqueta) ? 'Liquidación final' : /anticip|adelant/i.test(x.etiqueta) ? 'Anticipo de Sueldos' : /^sueldos?$/i.test(x.etiqueta) ? 'Sueldos' : null; if (k) cnt[k] = (cnt[k] || 0) + 1; });
+      const best = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
+      res(b, { desc: best ? best[0] : '', control: 'VER', motivo: best ? `Sugerido por fecha (en días parecidos fue "${best[0]}" ${best[1]} veces). Completar el nombre si es liquidación final` : 'Pago de sueldos: completar con RRHH' });
+    }
+
+    // 6) Proveedores: pagos Odoo y facturas
+    const cuitIn = s => { const m = up(s).match(/\b(2[0347]|3[034])\d{9}\b/); return m ? m[0] : null; };
+    const nameByCuit = cuit => { const f = inv.find(x => x.cuit === cuit); if (f) return f.nombre; const h = K.byRef.get('TRANSFERENCIA ' + cuit) || K.byRef.get('TRANSFERENCIA INMEDIATA COE ' + cuit); const c = h && h.filter(x => x.contacto).pop(); return c ? c.contacto : null; };
+    const inWin = (b, f, plus = 0) => f.fecha <= new Date(b.fecha.getTime() + plus * DAY) && f.fecha >= new Date(b.fecha.getTime() - 200 * DAY) && !usedInv.has(f.id);
+    const owed = f => f.adeudado != null && f.adeudado > 0 && f.adeudado < f.total ? f.adeudado : f.total;
+    const labelOf = fs => [...fs].sort((x, y) => x.fecha - y.fecha).map(f => f.ref || ((K.byContact.get(f.nombre) || []).filter(x => x.etiqueta).slice(-1)[0] || {}).etiqueta || f.numero).join(' - ');
+    const facts = fs => fs.map(f => f.numero).join(', ');
+    const rank = f => (UNPAID.includes(f.estadoPago) ? 0 : 1);
+    function combos(list, target, test, maxK = 3) {
+      list = list.slice(0, 25);
+      const found = [];
+      const rec = (start, chosen, sum) => {
+        if (chosen.length >= 2 && test(sum)) found.push([...chosen]);
+        if (chosen.length === maxK || found.length > 5) return;
+        for (let i = start; i < list.length; i++) { chosen.push(list[i]); rec(i + 1, chosen, sum + owed(list[i])); chosen.pop(); }
+      };
+      rec(0, [], 0);
+      return found;
+    }
+
+    // 6a) Pago o cobro cargado en Odoo por el mismo importe (débitos y créditos)
+    for (const b of bank) {
+      if (done.has(b.idx)) continue;
+      const cuit = cuitIn(b.concepto), contacto = cuit ? nameByCuit(cuit) : null, a = Math.abs(b.importe);
+      const cands = pay.map((x, i) => ({ x, i })).filter(({ x, i }) => !usedPay.has(i) && (x.signed ? eq(x.importe, b.importe) : eq(x.importe, a)) && Math.abs(x.fecha - b.fecha) <= 10 * DAY)
+        .sort((p, q) => Math.abs(p.x.fecha - b.fecha) - Math.abs(q.x.fecha - b.fecha));
+      if (!cands.length) continue;
+      const byC = contacto ? cands.filter(c => c.x.contacto === contacto) : [];
+      const pk = byC[0] || cands[0];
+      const unico = byC.length === 1 || cands.length === 1;
+      usedPay.add(pk.i);
+      const p = pk.x;
+      const fs = inv.filter(f => f.nombre === p.contacto && inWin(b, f, 7) && !usedInv.has(f.id) && ((!f.usd && eq(owed(f), a)) || (p.bruto && (eq(f.total, p.bruto) || eq(owed(f), p.bruto))))).sort((x, y) => rank(x) - rank(y) || y.fecha - x.fecha);
+      if (fs[0]) usedInv.add(fs[0].id);
+      const lastH = (K.byContact.get(p.contacto) || []).filter(x => x.etiqueta && Math.sign(x.importe) === Math.sign(b.importe)).slice(-1)[0];
+      const last3 = (K.byContact.get(p.contacto) || []).filter(x => x.etiqueta && Math.sign(x.importe) === Math.sign(b.importe)).slice(-3);
+      const fijo = !fs[0] && last3.length >= 2 && last3.every(x => low(x.etiqueta) === low(last3[0].etiqueta));
+      const fx = fija(p.contacto);
+      const hw = !fx && !fs[0] && (b.importe > 0 || CFG.hardware.includes(String(p.contacto).toUpperCase()));
+      const desc = fx ? fx : fs[0] ? labelOf([fs[0]]) : fijo ? last3[0].etiqueta : hw ? '#___ Hardware' : '';
+      if (hw && unico) { res(b, { desc, contacto: p.contacto, control: 'VER', factura: '', motivo: `${b.importe > 0 ? 'Cobro' : 'Pago'} Odoo ${p.numero} (${fmtD(p.fecha)}) · completar el número de hardware` }); continue; }
+      if (fx && unico) { res(b, { desc, contacto: p.contacto, control: 'OK', factura: fs[0] ? fs[0].numero : '', motivo: `${b.importe > 0 ? 'Cobro' : 'Pago'} Odoo ${p.numero} (${fmtD(p.fecha)}) · descripción fija del proveedor` }); continue; }
+      res(b, { desc, contacto: p.contacto, control: unico && (fs[0] || fijo) ? 'OK' : 'VER', factura: fs[0] ? fs[0].numero : '',
+        motivo: !unico ? `Hay ${cands.length} pagos en Odoo por este importe: ${cands.map(c => c.x.contacto).join(' | ')}` : `${b.importe > 0 ? 'Cobro' : 'Pago'} Odoo ${p.numero} (${fmtD(p.fecha)})` + (fs[0] ? ` · factura ${fs[0].numero}` : fijo ? ' · misma descripción de siempre para este contacto' : ' · sin factura en el export: completar descripción') });
+    }
+
+    for (const b of bank) {
+      if (done.has(b.idx) || b.importe >= 0) continue;
+      const C = up(b.concepto), a = -b.importe;
+      if (!/PAGO A PROVEEDORES|^TRANSFERENCI|PAGO CON VISA|COMPRA ELECTRON|PAGO DE SERVICIOS|GESTION PAGO|TRANSF\.?|DEBITO DIRECTO|BANELCO/.test(C)) continue;
+      const cuit = cuitIn(C);
+      let contacto = cuit ? nameByCuit(cuit) : null;
+      // 6b) importe exacto contra una sola factura
+      const ex = inv.filter(f => !f.usd && inWin(b, f, 7) && !usedInv.has(f.id) && eq(owed(f), a) && (!contacto || f.nombre === contacto || f.cuit === cuit));
+      if (ex.length === 1) {
+        const pick = ex[0]; usedInv.add(pick.id);
+        res(b, { desc: fija(pick.nombre) || labelOf([pick]), contacto: pick.nombre, control: 'OK', factura: pick.numero, motivo: `Importe exacto de la factura ${pick.numero}` });
+        continue;
+      }
+      // 6c) proveedor conocido por CUIT: suma exacta de facturas o etiqueta de la última vez
+      if (contacto || cuit) {
+        const sup = inv.filter(f => !f.usd && inWin(b, f) && !usedInv.has(f.id) && (f.nombre === contacto || (cuit && f.cuit === cuit))).sort((x, y) => rank(x) - rank(y) || y.fecha - x.fecha);
+        if (!contacto && sup[0]) contacto = sup[0].nombre;
+        const sumEx = combos(sup, a, s => eq(s, a));
+        if (sumEx.length === 1) { const fs = sumEx[0]; fs.forEach(f => usedInv.add(f.id)); res(b, { desc: labelOf(fs), contacto, control: 'OK', factura: facts(fs), motivo: `Suma exacta de ${fs.length} facturas` }); continue; }
+        if (contacto && fija(contacto)) { res(b, { desc: fija(contacto), contacto, control: 'OK', motivo: 'Contacto por CUIT · descripción fija del proveedor' }); continue; }
+        if (contacto) {
+          const l3 = (K.byContact.get(contacto) || []).filter(x => x.etiqueta && x.importe < 0).slice(-3);
+          const est = l3.length >= 2 && l3.every(x => low(x.etiqueta) === low(l3[0].etiqueta));
+          res(b, { desc: est ? l3[0].etiqueta : '', contacto, control: 'VER', motivo: 'Contacto por CUIT. Sin pago ni factura que coincida: completar descripción' + (est ? ' (precargada la descripción de siempre)' : '') });
+          continue;
+        }
+      }
+    }
+
+    // 6e) Cobros por "PAGO A PROVEEDORES OP." sin pago en Odoo: venta de hardware
+    for (const b of bank) if (!done.has(b.idx) && b.importe > 0 && /^PAGO A PROVEEDORES OP/.test(up(b.concepto))) res(b, { desc: '#___ Hardware', control: 'VER', motivo: 'Cobro de venta de hardware: completar número y cliente' });
+
+    // 7) Historial por referencia exacta y por patrón
+    for (const b of bank) {
+      if (done.has(b.idx)) continue;
+      const C = up(b.concepto);
+      const h = K.byRef.get(C);
+      if (h && h.length) {
+        const labs = new Set(h.map(x => low(x.etiqueta)));
+        const last = h[h.length - 1];
+        const cnt = {}; h.forEach(x => { if (x.contacto) cnt[x.contacto] = (cnt[x.contacto] || 0) + 1; });
+        const cont = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
+        const sameSign = h.filter(x => Math.sign(x.importe) === Math.sign(b.importe));
+        const lastS = sameSign.length ? sameSign[sameSign.length - 1] : last;
+        const ok = labs.size === 1 && h.length >= 2 && sameSign.length === h.length;
+        res(b, { desc: lastS.etiqueta, contacto: lastS.contacto || (cont ? cont[0] : ''), control: ok ? 'OK' : 'SUGERIDO', motivo: ok ? `Siempre igual en el historial (${h.length} veces)` : `Descripción de la última vez (${fmtD(lastS.fecha)}); esta referencia tuvo ${labs.size > 1 ? labs.size + ' descripciones distintas' : 'pocos antecedentes'}` });
+        continue;
+      }
+      const ak = acctKey(C), ha = ak && K.byAcct.get(ak);
+      if (ha && ha.length) { const l = ha[ha.length - 1]; res(b, { desc: l.etiqueta, contacto: l.contacto, control: 'SUGERIDO', motivo: `Misma cuenta ${ak}: la última vez fue "${l.etiqueta}" (${fmtD(l.fecha)})` }); continue; }
+      const P = pattern(C), hp = K.byPat.get(P);
+      if (hp && hp.length >= 3) {
+        const cnt = {}; hp.forEach(x => cnt[x.etiqueta] = (cnt[x.etiqueta] || 0) + 1);
+        const [lab, n] = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
+        if (n / hp.length >= 0.8) {
+          const withC = hp.filter(x => x.etiqueta === lab && x.contacto).slice(-1)[0];
+          res(b, { desc: lab, contacto: withC ? withC.contacto : '', control: 'SUGERIDO', motivo: `Conceptos parecidos fueron "${lab}" en ${n} de ${hp.length} casos` });
+          continue;
+        }
+        res(b, { motivo: 'Sin antecedente claro en el historial' });
+        continue;
+      }
+    }
+    for (const b of bank) if (!done.has(b.idx)) res(b, { motivo: 'Concepto nuevo: no aparece en el historial' });
+
+    out.forEach(o => { if (o.control === 'SUGERIDO') o.control = 'VER'; });
+    out.sort((x, y) => x.fecha - y.fecha || Math.min(...x.idxs) - Math.min(...y.idxs));
+    const totBank = r2(bank.reduce((s, b) => s + b.importe, 0)), totOut = r2(out.reduce((s, o) => s + o.importe, 0));
+    return { rows: out, totBank, totOut };
+  }
+
+  return { setConfig, parseBank, parseHist, parseInv, parsePay, process, toDate, fmt, fmtD, MESES };
+})();
+
+
+</script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const S = { bank: null, pay: null, inv: null, extra: null, rows: [], filter: 'ALL' };
+  const LS = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+  const toast = msg => { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
+  const money = n => (n < 0 ? '-$' : '$') + Engine.fmt(Math.abs(n));
+
+  let BASE = [];
+  const toBase = arr => (arr || []).map(r => ({ fecha: new Date(+r[0].slice(0, 4), +r[0].slice(4, 6) - 1, +r[0].slice(6, 8)), etiqueta: r[1] || '', contacto: r[2] || '', ref: r[3] || '', importe: r[4] }));
+  const keyH = h => `${+h.fecha}|${Math.round(h.importe * 100)}|${String(h.ref).toUpperCase().trim()}`;
+  const hist = () => { const m = new Map(); BASE.forEach(h => m.set(keyH(h), h)); (S.extra || []).forEach(h => m.set(keyH(h), h)); return [...m.values()]; };
+  const histMsg = () => { const h = hist(); if (!h.length) return 'Sin datos cargados: cargá el archivo de datos la primera vez (queda guardado en este navegador).'; const mx = new Date(Math.max(...h.map(x => x.fecha))); return `Datos cargados · historial hasta ${Engine.fmtD(mx)}.`; };
+  const setHist = () => { $('hist-msg').textContent = histMsg(); };
+  function applyDatos(d) { BASE = toBase(d.hist); Engine.setConfig(d.config); }
+  try { const d = LS.get('bbva-datos'); if (d && d.hist) applyDatos(d); } catch (e) {}
+  $('f-datos').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { const d = JSON.parse(await f.text()); if (!d.hist) throw new Error('no es el archivo de datos'); applyDatos(d); if (!LS.set('bbva-datos', d)) toast('Cargado, pero este navegador no lo pudo guardar: vas a tener que cargarlo cada vez'); else toast('Datos cargados y guardados'); setHist(); refresh(); }
+    catch (err) { $('err').textContent = 'No pude leer el archivo de datos: ' + err.message; }
+  });
+  try { const c = LS.get('bbva-hist'); if (c && c.data) S.extra = c.data.map(o => ({ ...o, fecha: new Date(o.fecha) })); } catch (e) {}
+  setHist();
+
+  function sheets(file) {
+    return file.arrayBuffer().then(buf => { const wb = XLSX.read(buf, { type: 'array', cellDates: true }); return wb.SheetNames.map(n => ({ name: n, rows: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: null }) })); });
+  }
+  function firstOk(sh, fn, prefer) {
+    const order = [...sh].sort((a, b) => (prefer && prefer.test(b.name) ? 1 : 0) - (prefer && prefer.test(a.name) ? 1 : 0));
+    let err; for (const s of order) { try { const r = fn(s.rows); if (r.length) return r; } catch (e) { err = e; } }
+    throw err || new Error('no encontré filas reconocibles');
+  }
+  const refresh = () => { $('run').disabled = !S.bank || !hist().length; };
+  const H = {
+    bank: { parse: sh => firstOk(sh, Engine.parseBank, /banco|movim|extracto|hoja/i), msg: (d, f) => `${f.name} · ${d.length} movimientos` },
+    pay: { parse: sh => firstOk(sh, Engine.parsePay), msg: (d, f) => `${f.name} · ${d.length} pagos` },
+    inv: { parse: sh => firstOk(sh, Engine.parseInv), msg: (d, f) => `${f.name} · ${d.length} facturas` },
+  };
+  for (const key of Object.keys(H)) {
+    const slot = $('s-' + key), input = $('f-' + key);
+    const load = async file => {
+      $('err').textContent = '';
+      try { S[key] = H[key].parse(await sheets(file)); slot.classList.add('loaded'); slot.querySelector('.msg').textContent = H[key].msg(S[key], file); }
+      catch (e) { S[key] = null; slot.classList.remove('loaded'); slot.querySelector('.msg').textContent = 'No pude leerlo: ' + e.message; }
+      refresh();
+    };
+    input.addEventListener('change', () => input.files[0] && load(input.files[0]));
+    slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag'); });
+    slot.addEventListener('dragleave', () => slot.classList.remove('drag'));
+    slot.addEventListener('drop', e => { e.preventDefault(); slot.classList.remove('drag'); e.dataTransfer.files[0] && load(e.dataTransfer.files[0]); });
+  }
+  $('f-hist').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { S.extra = firstOk(await sheets(f), Engine.parseHist); LS.set('bbva-hist', { data: S.extra }); setHist(); toast('Historial actualizado'); }
+    catch (err) { $('err').textContent = 'No pude leer el historial: ' + err.message; }
+  });
+  refresh();
+
+  $('run').addEventListener('click', () => {
+    $('err').textContent = '';
+    try {
+      const cut = S.bank.reduce((m, b) => b.fecha < m ? b.fecha : m, S.bank[0].fecha);
+      const all = hist(); const hh = all.filter(h => h.fecha < cut);
+      const r = Engine.process(S.bank, hh.length ? hh : all, S.inv || [], S.pay || [], {});
+      S.rows = r.rows; S.tot = r; S.filter = 'ALL';
+      $('result').hidden = false; $('intro').hidden = true; render();
+    } catch (e) { $('err').textContent = 'Error al procesar: ' + e.message; console.error(e); }
+  });
+
+  function render() {
+    const n = { OK: 0, VER: 0 }; S.rows.forEach(r => n[r.control]++);
+    $('seg').innerHTML = '';
+    for (const [k, lab, c] of [['ALL', 'Todos', S.rows.length], ['VER', 'Revisar', n.VER], ['OK', 'OK', n.OK]]) {
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', S.filter === k); b.innerHTML = `${lab} <b>${c}</b>`;
+      b.onclick = () => { S.filter = k; render(); }; $('seg').appendChild(b);
+    }
+    const sum = S.rows.reduce((s, r) => s + r.importe, 0), ok = Math.abs(sum - S.tot.totBank) < 0.01;
+    $('check').className = 'check' + (ok ? '' : ' bad'); $('check').textContent = ok ? `Cierra con el extracto: ${money(sum)}` : `No cierra: extracto ${money(S.tot.totBank)} · salida ${money(sum)}`;
+    const tb = $('tb'); tb.innerHTML = '';
+    S.rows.forEach((r, i) => {
+      if (S.filter !== 'ALL' && r.control !== S.filter) return;
+      const tr = document.createElement('tr'); if (r.control === 'VER') tr.className = 'v';
+      const td = (c, cls) => { const t = document.createElement('td'); if (cls) t.className = cls; if (c instanceof Node) t.appendChild(c); else t.textContent = c; tr.appendChild(t); return t; };
+      td(Engine.fmtD(r.fecha), 'num');
+      const cc = td(r.idxs.length > 1 ? `${r.idxs.length} gastos e IVA bancarios` : r.concepto, 'conc'); if (r.idxs.length > 1) cc.title = r.concepto;
+      td(money(r.importe), 'num amt ' + (r.importe > 0 ? 'pos' : 'neg'));
+      const mk = (f, ph) => { const inp = document.createElement('input'); inp.className = 'ed'; inp.id = `e-${f}-${i}`; inp.value = r[f] || ''; inp.placeholder = ph; inp.setAttribute('aria-label', f); inp.addEventListener('input', () => { r[f] = inp.value; }); return inp; };
+      const dCell = document.createElement('div'); dCell.appendChild(mk('desc', r.control === 'VER' ? 'Completar' : ''));
+      if (r.control === 'VER' && r.motivo) { const w = document.createElement('div'); w.className = 'why'; w.textContent = r.motivo; dCell.appendChild(w); }
+      td(dCell); td(mk('contacto', ''));
+      const pill = document.createElement('button'); pill.type = 'button'; pill.className = 'pill ' + r.control; pill.textContent = r.control === 'OK' ? 'OK' : 'Revisar';
+      pill.title = r.motivo + (r.factura ? ' · ' + r.factura : '') + ' — clic para cambiar';
+      pill.onclick = () => { r.control = r.control === 'OK' ? 'VER' : 'OK'; render(); };
+      td(pill);
+      tb.appendChild(tr);
+    });
+  }
+
+  const head = ['FECHA', 'DESCRIPCIÓN', 'CONTACTO', 'REFERENCIA', 'IMPORTE', 'CONTROL'];
+  const out = () => S.rows.map(r => [r.fecha, r.desc || '', r.contacto || '', r.ref || '', r.importe, r.control]);
+  function build() {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([head, ...out()], { cellDates: true, dateNF: 'dd/mm/yyyy' });
+    ws['!cols'] = [{ wch: 11 }, { wch: 42 }, { wch: 38 }, { wch: 44 }, { wch: 16 }, { wch: 9 }];
+    for (let i = 2; i <= S.rows.length + 1; i++) { if (ws['E' + i]) ws['E' + i].z = '#,##0.00'; if (ws['A' + i]) ws['A' + i].z = 'dd/mm/yyyy'; }
+    XLSX.utils.book_append_sheet(wb, ws, 'BBVA');
+    const det = XLSX.utils.aoa_to_sheet([[...head, 'CONCEPTO BANCO', 'FACTURA', 'MOTIVO'], ...S.rows.map(r => [r.fecha, r.desc || '', r.contacto || '', r.ref || '', r.importe, r.control, r.concepto, r.factura || '', r.motivo || ''])], { cellDates: true, dateNF: 'dd/mm/yyyy' });
+    XLSX.utils.book_append_sheet(wb, det, 'Detalle');
+    return XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  }
+  const fname = () => { const d = S.rows.reduce((m, r) => r.fecha > m ? r.fecha : m, S.rows[0].fecha); return `BBVA AL ${String(d.getDate()).padStart(2, '0')}.xlsx`; };
+  let dl = null; (async () => { try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { dl = null; } })();
+  $('dl').addEventListener('click', async () => {
+    const data = build(), name = fname();
+    if (dl) { try { await dl.save({ filename: name, data: new Blob([data]) }); toast('Excel guardado'); } catch (e) { if (!e || e.code !== 'declined') toast('No se pudo guardar. Usá Copiar y pegalo en Excel.'); } }
+    else { try { XLSX.writeFile(XLSX.read(data, { type: 'array' }), name); } catch (e) { toast('La descarga no está disponible acá. Usá Copiar.'); } }
+  });
+  $('copy').addEventListener('click', async () => {
+    const tsv = [head, ...out().map(r => [Engine.fmtD(r[0]), r[1], r[2], r[3], String(r[4]).replace('.', ','), r[5]])].map(r => r.join('\t')).join('\n');
+    try { await navigator.clipboard.writeText(tsv); toast('Copiado: pegalo en Excel'); }
+    catch (e) { const ta = document.createElement('textarea'); ta.value = tsv; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Copiado'); } catch (_) { toast('No pude copiar'); } ta.remove(); }
+  });
+})();
+</script>
+
+</html>
