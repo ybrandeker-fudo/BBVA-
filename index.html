@@ -127,7 +127,9 @@ const Engine = (() => {
   // Descripción fija por proveedor (le gana a la referencia de la factura)
   let CFG = { fijas: {}, hardware: [], cuit: [], cuentas: [] };
   const setConfig = c => { CFG = { fijas: {}, hardware: [], cuit: [], cuentas: [], ...(c || {}) }; };
-  const fija = c => CFG.fijas[String(c || '').toUpperCase().replace(/\s+/g, ' ').trim()];
+  const keyC = c => strip(c).toUpperCase().replace(/\s+/g, ' ').trim();
+  const fija = (c, d) => { const k = keyC(c); if (d && (CFG.periodo || []).some(x => keyC(x) === k)) return `PERIODO ${pad(d.getMonth() + 1)}/${d.getFullYear()}`; const f = Object.entries(CFG.fijas || {}).find(([n]) => keyC(n) === k); return f ? f[1] : undefined; };
+  const esHW = c => (CFG.hardware || []).some(x => keyC(x) === keyC(c));
   const UNPAID = ['Registrado','En proceso de pago','Pagado parcialmente'];
   const EXCL_PAGO = ['Revertido','Cancelado','Borrador'];
 
@@ -215,7 +217,7 @@ const Engine = (() => {
     const t = table(rows2d, [['numero'], ['total']]);
     if (!t) throw new Error('El export de facturas tiene que traer Número, Contacto, Fecha, Moneda, Total, Estado en pago y Referencia.');
     const c = {
-      num: t.col('numero'), cuit: t.col('contacto/numero de identificacion', 'cuit'), nom: t.col('nombre del contacto', 'contacto', 'proveedor', 'empresa'),
+      num: t.col('numero'), cuit: t.col('contacto/numero de identificacion', 'socio/nif', 'cuit', 'nif'), nom: t.col('nombre del contacto', 'nombre de la empresa', 'contacto', 'proveedor', 'empresa'),
       fec: t.col('fecha de la factura', 'fecha'), mon: t.col('moneda/nombre', 'moneda'), tot: t.col('total'), adeu: t.col('importe adeudado', 'adeudado', 'importe residual'),
       est: t.col('estado'), estp: t.col('estado en pago'), ref: t.col('referencia'), tipo: t.col('tipo de documento')
     };
@@ -385,7 +387,7 @@ const Engine = (() => {
           ANTICIPO: ['Anticipo de ganancias', `ARCA${c.b.fecha.getFullYear()}`],
           IIBB: [`IIBB ${yyyy}_${mm}`, `CM-SOP${mm}/${yy}`],
           IVA: [`IVA DJ${mm}/${yy}`, `ARCA${mm}/${yy}`],
-          RETIIGG: ['Reteción de IIGG', 'PAGOS AFIP'],
+          RETIIGG: ['Retención de IIGG', 'PAGOS AFIP'],
         };
         const [desc, ref] = map[c.p.k];
         const conf = c.s < 0.5 ? 'SUGERIDO' : 'VER';
@@ -442,8 +444,32 @@ const Engine = (() => {
       const lastH = (K.byContact.get(p.contacto) || []).filter(x => x.etiqueta && Math.sign(x.importe) === Math.sign(b.importe)).slice(-1)[0];
       const last3 = (K.byContact.get(p.contacto) || []).filter(x => x.etiqueta && Math.sign(x.importe) === Math.sign(b.importe)).slice(-3);
       const fijo = !fs[0] && last3.length >= 2 && last3.every(x => low(x.etiqueta) === low(last3[0].etiqueta));
-      const fx = fija(p.contacto);
-      const hw = !fx && !fs[0] && (b.importe > 0 || CFG.hardware.includes(String(p.contacto).toUpperCase()));
+      const fx = fija(p.contacto, b.fecha);
+      const hw = !fx && !fs[0] && (b.importe > 0 || esHW(p.contacto));
+      if (hw && unico && b.importe < 0) {
+        // facturas de hardware del proveedor: las que suman el total del pago, o las que están "En proceso de pago"
+        const cand = inv.filter(f => keyC(f.nombre) === keyC(p.contacto) && !usedInv.has(f.id) && f.fecha <= new Date(b.fecha.getTime() + 7 * DAY) && f.estadoPago !== 'Pagado').sort((x, y) => x.numero < y.numero ? -1 : 1);
+        let sel = null, exacto = false;
+        if (p.bruto && cand.length) {
+          const tot = cand.reduce((t, f) => t + owed(f), 0);
+          if (eq(tot, p.bruto)) { sel = cand; exacto = true; }
+          else if (cand.length <= 20) {
+            const pick = []; let found = null;
+            const rec = (i, sum) => { if (found) return; if (eq(sum, p.bruto) && pick.length) { found = [...pick]; return; } if (i >= cand.length || sum > p.bruto + 0.01) return; pick.push(cand[i]); rec(i + 1, sum + owed(cand[i])); pick.pop(); rec(i + 1, sum); };
+            rec(0, 0); if (found) { sel = found; exacto = true; }
+          }
+        }
+        if (!sel) sel = cand.filter(f => f.estadoPago === 'En proceso de pago');
+        if (sel.length) {
+          const nums = sel.flatMap(f => (f.ref.match(/#\d+/g) || [])).filter((v, i, a) => a.indexOf(v) === i);
+          if (nums.length) {
+            if (exacto) sel.forEach(f => usedInv.add(f.id));
+            res(b, { desc: `${nums.join(' ')} Hardware`, contacto: p.contacto, control: exacto ? 'OK' : 'VER', factura: facts(sel),
+              motivo: exacto ? `Pago Odoo ${p.numero} · ${sel.length} facturas suman el total del pago` : `Pago Odoo ${p.numero} · facturas "En proceso de pago" de este proveedor: confirmar los números` });
+            continue;
+          }
+        }
+      }
       const desc = fx ? fx : fs[0] ? labelOf([fs[0]]) : fijo ? last3[0].etiqueta : hw ? '#___ Hardware' : '';
       if (hw && unico) { res(b, { desc, contacto: p.contacto, control: 'VER', factura: '', motivo: `${b.importe > 0 ? 'Cobro' : 'Pago'} Odoo ${p.numero} (${fmtD(p.fecha)}) · completar el número de hardware` }); continue; }
       if (fx && unico) { res(b, { desc, contacto: p.contacto, control: 'OK', factura: fs[0] ? fs[0].numero : '', motivo: `${b.importe > 0 ? 'Cobro' : 'Pago'} Odoo ${p.numero} (${fmtD(p.fecha)}) · descripción fija del proveedor` }); continue; }
@@ -461,7 +487,7 @@ const Engine = (() => {
       const ex = inv.filter(f => !f.usd && inWin(b, f, 7) && !usedInv.has(f.id) && eq(owed(f), a) && (!contacto || f.nombre === contacto || f.cuit === cuit));
       if (ex.length === 1) {
         const pick = ex[0]; usedInv.add(pick.id);
-        res(b, { desc: fija(pick.nombre) || labelOf([pick]), contacto: pick.nombre, control: 'OK', factura: pick.numero, motivo: `Importe exacto de la factura ${pick.numero}` });
+        res(b, { desc: fija(pick.nombre, b.fecha) || labelOf([pick]), contacto: pick.nombre, control: 'OK', factura: pick.numero, motivo: `Importe exacto de la factura ${pick.numero}` });
         continue;
       }
       // 6c) proveedor conocido por CUIT: suma exacta de facturas o etiqueta de la última vez
@@ -470,7 +496,7 @@ const Engine = (() => {
         if (!contacto && sup[0]) contacto = sup[0].nombre;
         const sumEx = combos(sup, a, s => eq(s, a));
         if (sumEx.length === 1) { const fs = sumEx[0]; fs.forEach(f => usedInv.add(f.id)); res(b, { desc: labelOf(fs), contacto, control: 'OK', factura: facts(fs), motivo: `Suma exacta de ${fs.length} facturas` }); continue; }
-        if (contacto && fija(contacto)) { res(b, { desc: fija(contacto), contacto, control: 'OK', motivo: 'Contacto por CUIT · descripción fija del proveedor' }); continue; }
+        if (contacto && fija(contacto, b.fecha)) { res(b, { desc: fija(contacto, b.fecha), contacto, control: 'OK', motivo: 'Contacto por CUIT · descripción fija del proveedor' }); continue; }
         if (contacto) {
           const l3 = (K.byContact.get(contacto) || []).filter(x => x.etiqueta && x.importe < 0).slice(-3);
           const est = l3.length >= 2 && l3.every(x => low(x.etiqueta) === low(l3[0].etiqueta));
